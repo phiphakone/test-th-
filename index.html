@@ -1866,6 +1866,20 @@ html[lang="zh"] .tab-h{line-height:1.35}
   padding:14px 12px;border-bottom:1px solid #EDEFF1;color:var(--ink);line-height:1.5;
 }
 .admin-table tr:hover{background:#FAFBFC}
+.admin-orders-table-wrap{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;background:#fff;border-radius:10px;scrollbar-width:thin}
+.admin-orders-table{min-width:1120px;width:100%;table-layout:auto}
+.admin-orders-table th,.admin-orders-table td{vertical-align:middle}
+.admin-orders-table th:nth-child(1),.admin-orders-table td:nth-child(1){min-width:108px}
+.admin-orders-table th:nth-child(2),.admin-orders-table td:nth-child(2){min-width:140px}
+.admin-orders-table th:nth-child(3),.admin-orders-table td:nth-child(3){min-width:118px;white-space:nowrap}
+.admin-orders-table th:nth-child(4),.admin-orders-table td:nth-child(4){min-width:52px}
+.admin-orders-table th:nth-child(5),.admin-orders-table td:nth-child(5){min-width:96px;white-space:nowrap}
+.admin-orders-table th:nth-child(6),.admin-orders-table td:nth-child(6){min-width:84px;white-space:nowrap}
+.admin-orders-table th:nth-child(7),.admin-orders-table td:nth-child(7){min-width:104px}
+.admin-orders-table th:nth-child(8),.admin-orders-table td:nth-child(8){min-width:168px}
+.admin-orders-table th:nth-child(9),.admin-orders-table td:nth-child(9){min-width:144px}
+.admin-orders-table th:nth-child(10),.admin-orders-table td:nth-child(10){min-width:98px;white-space:nowrap}
+.admin-orders-table th:nth-child(11),.admin-orders-table td:nth-child(11){min-width:48px}
 .status{
   display:inline-block;padding:4px 10px;border-radius:999px;
   font-size:.72rem;font-weight:600;line-height:1.35;
@@ -8253,9 +8267,10 @@ function adminOrders(){
       <small style="color:var(--sage);font-weight:400;font-size:.7rem;margin-left:10px">● live</small>
     </h1>
   </div>
-  <div class="admin-card">
+  <div class="admin-card" style="min-width:0;max-width:100%;padding:16px;background:#fff">
     ${orders.length? `
-    <table class="admin-table">
+    <div class="admin-orders-table-wrap">
+    <table class="admin-table admin-orders-table">
       <thead><tr><th>${t("admin.col.code")}</th><th>${t("admin.col.customer")}</th><th>${t("admin.col.phone")}</th><th>${t("admin.col.items")}</th><th>${t("admin.col.total")}</th><th>${t("admin.col.payment")}</th><th>${t("sys.admin.paymentProof")}</th><th>${t("admin.col.payment")}</th><th>${t("admin.col.status")}</th><th>${t("admin.col.date")}</th><th></th></tr></thead>
       <tbody>
         ${orders.map(o=>{
@@ -8291,7 +8306,8 @@ function adminOrders(){
           </tr>
         `;}).join('')}
       </tbody>
-    </table>` : `<p style="color:var(--muted);padding:30px;text-align:center">${t('admin.no.orders')}</p>`}
+    </table>
+    </div>` : `<p style="color:var(--muted);padding:30px;text-align:center">${t('admin.no.orders')}</p>`}
   </div>
   `;
 }
