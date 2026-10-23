@@ -2073,6 +2073,25 @@ body.admin-mode{background:#F4F5F7}
   .float-chat .fc-btn{width:46px;height:46px}
 }
 
+/* Keep admin navigation available in portrait layouts. */
+@media (min-width:641px) and (max-width:1024px){
+  .admin-shell{grid-template-columns:220px minmax(0,1fr)}
+  .admin-sidebar{position:sticky;top:0;left:auto;width:auto;height:100vh;max-height:100vh;transition:none;z-index:5}
+  .admin-sidebar.open{left:auto}
+  .admin-main{padding:22px 18px}
+}
+@media (max-width:640px){
+  .admin-shell{grid-template-columns:minmax(0,1fr)}
+  .admin-sidebar{position:sticky;top:0;left:auto;align-self:start;width:auto;height:auto;max-height:42vh;overflow-y:auto;transition:none;z-index:5;padding:12px;background:var(--navy-deep)}
+  .admin-sidebar.open{left:auto}
+  .admin-brand{padding:4px 6px 10px;margin-bottom:10px}
+  .admin-brand .logo{width:34px;height:34px}
+  .admin-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+  .admin-nav a{min-width:0;padding:9px 8px;gap:7px;font-size:.78rem;line-height:1.25}
+  .admin-nav svg{flex:0 0 17px;width:17px;height:17px}
+  .admin-main{padding:16px 12px}
+}
+
 /* Mobile menu */
 .mobile-menu{
   position:fixed;top:0;right:-100%;width:85%;max-width:340px;height:100vh;
