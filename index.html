@@ -2352,6 +2352,7 @@ body.admin-mode{background:#F4F5F7}
     addDoc,
     doc,
     updateDoc,
+     deleteDoc,
     setDoc,
     getDoc,
     query,
@@ -2508,7 +2509,7 @@ const firebaseConfig = {
 
     window.LCFB = {
       db, auth, storage,
-      collection, addDoc, doc, updateDoc, setDoc,
+       collection, addDoc, doc, updateDoc, deleteDoc, setDoc,
       query, orderBy, where, onSnapshot, serverTimestamp, getDoc,
       storageRef, uploadBytes, getDownloadURL,
       // auth API used by loginUser/registerUser/logoutUser
@@ -2521,6 +2522,9 @@ const firebaseConfig = {
   } catch (err) {
     console.error('[Firebase] ✗ Init failed:', err);
     window.LCFB = { ready: false, error: err.message };
+    window._fbActivitiesLoading = false;
+    window._fbActivitiesError = err;
+    window.dispatchEvent(new Event('lcfb-ready'));
   }
 </script>
 
@@ -2808,7 +2812,7 @@ const I18N = {
     'acc.login.success':'Đăng nhập thành công','acc.register.success':'Đăng ký thành công',
     'acc.logout.success':'Đã đăng xuất','acc.fillInfo':'Vui lòng điền đầy đủ',
     'acc.fillEmail':'Vui lòng nhập email','acc.itemCount':'sản phẩm',
-    'exp.title':'Đặt trải nghiệm văn hoá Lào – Việt','exp.intro':'Đặt vé cho trải nghiệm ẩm thực, sự kiện và workshop khám phá văn hoá. Lịch bên dưới do công ty cập nhật.','exp.event':'Trải nghiệm ẩm thực & sự kiện','exp.event.desc':'Thưởng thức hương vị địa phương và tham gia các hoạt động văn hoá theo lịch.','exp.workshop':'Workshop khám phá văn hoá','exp.workshop.desc':'Gặp gỡ nghệ nhân, tìm hiểu phong tục và tự tay trải nghiệm nghề thủ công.','exp.booking':'Gửi yêu cầu đặt chỗ','exp.type':'Loại trải nghiệm','exp.name':'Họ và tên','exp.contact':'Số điện thoại hoặc email','exp.date':'Ngày mong muốn','exp.guests':'Số vé','exp.submit':'Gửi yêu cầu','exp.confirm':'Đã ghi nhận yêu cầu đặt chỗ mẫu. Nhân viên sẽ xác nhận lịch với bạn.','exp.calendar':'Lịch hoạt động','exp.calendar.empty':'Lịch hoạt động sẽ được công ty cập nhật sớm.','exp.notice':'Bản xem trước: yêu cầu đặt chỗ được lưu tạm trong phiên trình duyệt này; chưa có thanh toán hoặc xác nhận vé tự động.','exp.choose':'Chọn hoạt động','acc.member.title':'Thành viên Lotus & Champa','acc.member.points':'Điểm tích luỹ','acc.member.pointsHelp':'Điểm và ưu đãi sẽ được cập nhật khi chương trình thành viên được kết nối.','acc.member.coupons':'Mã ưu đãi của tôi','acc.member.noCodes':'Bạn chưa có mã ưu đãi nào.',
+    'exp.title':'Đặt trải nghiệm văn hoá Lào – Việt','exp.intro':'Đặt vé cho trải nghiệm ẩm thực, sự kiện và workshop khám phá văn hoá. Lịch bên dưới do công ty cập nhật.','exp.event':'Trải nghiệm ẩm thực & sự kiện','exp.event.desc':'Thưởng thức hương vị địa phương và tham gia các hoạt động văn hoá theo lịch.','exp.workshop':'Workshop khám phá văn hoá','exp.workshop.desc':'Gặp gỡ nghệ nhân, tìm hiểu phong tục và tự tay trải nghiệm nghề thủ công.','exp.booking':'Gửi yêu cầu đặt chỗ','exp.type':'Loại trải nghiệm','exp.name':'Họ và tên','exp.contact':'Số điện thoại hoặc email','exp.date':'Ngày mong muốn','exp.guests':'Số vé','exp.submit':'Gửi yêu cầu','exp.confirm':'Đã gửi yêu cầu đặt chỗ. Nhân viên sẽ xác nhận lịch với bạn.','exp.saveError':'Không thể gửi yêu cầu lúc này. Vui lòng thử lại.','exp.calendar':'Lịch hoạt động','exp.calendar.empty':'Lịch hoạt động sẽ được công ty cập nhật sớm.','exp.notice':'Yêu cầu đặt chỗ được lưu trên hệ thống; nhân viên sẽ xác nhận lịch. Chưa có thanh toán hoặc xuất vé tự động.','exp.choose':'Chọn hoạt động','acc.member.title':'Thành viên Lotus & Champa','acc.member.points':'Điểm tích luỹ','acc.member.pointsHelp':'Điểm và ưu đãi sẽ được cập nhật khi chương trình thành viên được kết nối.','acc.member.coupons':'Mã ưu đãi của tôi','acc.member.noCodes':'Bạn chưa có mã ưu đãi nào.',
     // ===== BREADCRUMB =====
     'bc.home':'Trang chủ','bc.products':'Sản phẩm','bc.cart':'Giỏ hàng','bc.checkout':'Thanh toán',
     'bc.blog':'Blog','bc.about':'Về chúng tôi','bc.business':'Business Model',
@@ -2874,7 +2878,7 @@ const I18N = {
     'admin.back':'← Quay về trang chủ','admin.dash':'Tổng quan',
     'admin.products':'Sản phẩm','admin.orders':'Đơn hàng','admin.reviews':'Đánh giá',
     'admin.blog':'Blog','admin.coupons':'Mã giảm giá','admin.logout':'Đăng xuất',
-    'admin.bookings':'Đặt trải nghiệm','admin.members':'Hội viên','admin.reports':'Báo cáo','admin.calendar':'Lịch hoạt động','admin.calendar.formTitle':'Thêm hoạt động','admin.calendar.name':'Tên hoạt động','admin.calendar.date':'Ngày','admin.calendar.place':'Địa điểm','admin.calendar.save':'Lưu hoạt động','admin.calendar.empty':'Chưa có hoạt động nào.','admin.bookings.empty':'Chưa có yêu cầu đặt chỗ.','admin.members.empty':'Chưa có dữ liệu hội viên.','admin.report.bookings':'Yêu cầu đặt trải nghiệm','admin.report.members':'Khách hàng đã đặt','admin.report.revenue':'Doanh thu đơn hàng','admin.prototype':'Dữ liệu mẫu trên trình duyệt này; chưa đồng bộ Firebase.',
+    'admin.bookings':'Đặt trải nghiệm','admin.members':'Hội viên','admin.reports':'Báo cáo','admin.calendar':'Lịch hoạt động','admin.calendar.formTitle':'Thêm hoạt động','admin.calendar.name':'Tên hoạt động','admin.calendar.date':'Ngày','admin.calendar.place':'Địa điểm','admin.calendar.save':'Lưu hoạt động','admin.calendar.empty':'Chưa có hoạt động nào.','admin.bookings.empty':'Chưa có yêu cầu đặt chỗ.','admin.members.empty':'Chưa có dữ liệu hội viên.','admin.report.bookings':'Yêu cầu đặt trải nghiệm','admin.report.members':'Khách hàng đã đặt','admin.report.revenue':'Doanh thu đơn hàng','admin.prototype':'Dữ liệu mẫu trên trình duyệt này; chưa đồng bộ Firebase.','admin.synced':'Dữ liệu đang được đồng bộ từ Firebase.','admin.dataLoading':'Đang tải dữ liệu từ Firebase…','admin.dataError':'Không thể tải dữ liệu. Hãy kiểm tra Firestore rules và kết nối.','admin.saveError':'Không thể lưu thay đổi. Hãy kiểm tra quyền truy cập và thử lại.',
     'admin.toSite':'Về website','admin.welcome':'Chào mừng trở lại, admin',
     'admin.stat.orders':'Tổng đơn hàng','admin.stat.revenue':'Doanh thu',
     'admin.stat.products':'Sản phẩm','admin.stat.customers':'Khách hàng',
@@ -3131,7 +3135,7 @@ const I18N = {
     'acc.login.success':'ເຂົ້າສູ່ລະບົບສຳເລັດ','acc.register.success':'ລົງທະບຽນສຳເລັດ',
     'acc.logout.success':'ອອກຈາກລະບົບແລ້ວ','acc.fillInfo':'ກະລຸນາໃສ່ຂໍ້ມູນໃຫ້ຄົບ',
     'acc.fillEmail':'ກະລຸນາໃສ່ອີເມວ','acc.itemCount':'ສິນຄ້າ',
-    'exp.title':'ຈອງປະສົບການວັດທະນະທຳລາວ – ຫວຽດນາມ','exp.intro':'ຈອງບັດສຳລັບປະສົບການອາຫານ ກິດຈະກຳ ແລະ ເວີກຊັອບຄົ້ນພົບວັດທະນະທຳ. ບໍລິສັດຈະອັບເດດຕາຕະລາງຢູ່ດ້ານລຸ່ມ.','exp.event':'ປະສົບການອາຫານ ແລະ ກິດຈະກຳ','exp.event.desc':'ຊີມລົດຊາດທ້ອງຖິ່ນ ແລະ ຮ່ວມກິດຈະກຳວັດທະນະທຳຕາມຕາຕະລາງ.','exp.workshop':'ເວີກຊັອບຄົ້ນພົບວັດທະນະທຳ','exp.workshop.desc':'ພົບປະຊ່າງສິລະປະ ຮຽນຮູ້ປະເພນີ ແລະ ລອງເຮັດຫັດຖະກຳດ້ວຍຕົນເອງ.','exp.booking':'ສົ່ງຄຳຂໍຈອງ','exp.type':'ປະເພດປະສົບການ','exp.name':'ຊື່ ແລະ ນາມສະກຸນ','exp.contact':'ເບີໂທ ຫຼື ອີເມວ','exp.date':'ວັນທີທີ່ຕ້ອງການ','exp.guests':'ຈຳນວນບັດ','exp.submit':'ສົ່ງຄຳຂໍ','exp.confirm':'ບັນທຶກຄຳຂໍຈອງຕົວຢ່າງແລ້ວ. ພະນັກງານຈະຢືນຢັນວັນເວລາກັບທ່ານ.','exp.calendar':'ຕາຕະລາງກິດຈະກຳ','exp.calendar.empty':'ບໍລິສັດຈະອັບເດດຕາຕະລາງກິດຈະກຳໃນໄວໆນີ້.','exp.notice':'ໜ້າຕົວຢ່າງ: ຄຳຂໍຈອງຈະຖືກເກັບຊົ່ວຄາວໃນເຊດຊັນຂອງບຣາວເຊີນີ້; ຍັງບໍ່ມີການຊຳລະເງິນ ຫຼື ຢືນຢັນບັດອັດຕະໂນມັດ.','exp.choose':'ເລືອກກິດຈະກຳ','acc.member.title':'ສະມາຊິກ Lotus & Champa','acc.member.points':'ຄະແນນສະສົມ','acc.member.pointsHelp':'ຄະແນນ ແລະ ສ່ວນຫຼຸດຈະອັບເດດເມື່ອເຊື່ອມຕໍ່ໂຄງການສະມາຊິກ.','acc.member.coupons':'ລະຫັດສ່ວນຫຼຸດຂອງຂ້ອຍ','acc.member.noCodes':'ທ່ານຍັງບໍ່ມີລະຫັດສ່ວນຫຼຸດ.',
+    'exp.title':'ຈອງປະສົບການວັດທະນະທຳລາວ – ຫວຽດນາມ','exp.intro':'ຈອງບັດສຳລັບປະສົບການອາຫານ ກິດຈະກຳ ແລະ ເວີກຊັອບຄົ້ນພົບວັດທະນະທຳ. ບໍລິສັດຈະອັບເດດຕາຕະລາງຢູ່ດ້ານລຸ່ມ.','exp.event':'ປະສົບການອາຫານ ແລະ ກິດຈະກຳ','exp.event.desc':'ຊີມລົດຊາດທ້ອງຖິ່ນ ແລະ ຮ່ວມກິດຈະກຳວັດທະນະທຳຕາມຕາຕະລາງ.','exp.workshop':'ເວີກຊັອບຄົ້ນພົບວັດທະນະທຳ','exp.workshop.desc':'ພົບປະຊ່າງສິລະປະ ຮຽນຮູ້ປະເພນີ ແລະ ລອງເຮັດຫັດຖະກຳດ້ວຍຕົນເອງ.','exp.booking':'ສົ່ງຄຳຂໍຈອງ','exp.type':'ປະເພດປະສົບການ','exp.name':'ຊື່ ແລະ ນາມສະກຸນ','exp.contact':'ເບີໂທ ຫຼື ອີເມວ','exp.date':'ວັນທີທີ່ຕ້ອງການ','exp.guests':'ຈຳນວນບັດ','exp.submit':'ສົ່ງຄຳຂໍ','exp.confirm':'ສົ່ງຄຳຂໍຈອງແລ້ວ. ພະນັກງານຈະຢືນຢັນວັນເວລາກັບທ່ານ.','exp.saveError':'ສົ່ງຄຳຂໍບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່.','exp.calendar':'ຕາຕະລາງກິດຈະກຳ','exp.calendar.empty':'ບໍລິສັດຈະອັບເດດຕາຕະລາງກິດຈະກຳໃນໄວໆນີ້.','exp.notice':'ຄຳຂໍຈອງຈະບັນທຶກໃນລະບົບ ແລະ ພະນັກງານຈະຢືນຢັນວັນເວລາ. ຍັງບໍ່ມີການຊຳລະເງິນ ຫຼື ອອກປີ້ອັດຕະໂນມັດ.','exp.choose':'ເລືອກກິດຈະກຳ','acc.member.title':'ສະມາຊິກ Lotus & Champa','acc.member.points':'ຄະແນນສະສົມ','acc.member.pointsHelp':'ຄະແນນ ແລະ ສ່ວນຫຼຸດຈະອັບເດດເມື່ອເຊື່ອມຕໍ່ໂຄງການສະມາຊິກ.','acc.member.coupons':'ລະຫັດສ່ວນຫຼຸດຂອງຂ້ອຍ','acc.member.noCodes':'ທ່ານຍັງບໍ່ມີລະຫັດສ່ວນຫຼຸດ.',
     // ===== BREADCRUMB =====
     'bc.home':'ໜ້າຫຼັກ','bc.products':'ສິນຄ້າ','bc.cart':'ກະຕ່າສິນຄ້າ','bc.checkout':'ຊຳລະເງິນ',
     'bc.blog':'ບລັອກ','bc.about':'ກ່ຽວກັບເຮົາ','bc.business':'ໂມເດວທຸລະກິດ',
@@ -3197,7 +3201,7 @@ const I18N = {
     'admin.back':'← ກັບໄປໜ້າຫຼັກ','admin.dash':'ພາບລວມ',
     'admin.products':'ສິນຄ້າ','admin.orders':'ການສັ່ງຊື້','admin.reviews':'ການປະເມີນ',
     'admin.blog':'ບລັອກ','admin.coupons':'ລະຫັດສ່ວນຫຼຸດ','admin.logout':'ອອກຈາກລະບົບ',
-    'admin.bookings':'ການຈອງປະສົບການ','admin.members':'ສະມາຊິກ','admin.reports':'ລາຍງານ','admin.calendar':'ຕາຕະລາງກິດຈະກຳ','admin.calendar.formTitle':'ເພີ່ມກິດຈະກຳ','admin.calendar.name':'ຊື່ກິດຈະກຳ','admin.calendar.date':'ວັນທີ','admin.calendar.place':'ສະຖານທີ່','admin.calendar.save':'ບັນທຶກກິດຈະກຳ','admin.calendar.empty':'ຍັງບໍ່ມີກິດຈະກຳ.','admin.bookings.empty':'ຍັງບໍ່ມີຄຳຂໍຈອງ.','admin.members.empty':'ຍັງບໍ່ມີຂໍ້ມູນສະມາຊິກ.','admin.report.bookings':'ຄຳຂໍຈອງປະສົບການ','admin.report.members':'ລູກຄ້າທີ່ເຄີຍຈອງ','admin.report.revenue':'ລາຍຮັບຈາກຄຳສັ່ງຊື້','admin.prototype':'ຂໍ້ມູນຕົວຢ່າງໃນບຣາວເຊີນີ້; ຍັງບໍ່ໄດ້ຊິງຄ໌ກັບ Firebase.',
+    'admin.bookings':'ການຈອງປະສົບການ','admin.members':'ສະມາຊິກ','admin.reports':'ລາຍງານ','admin.calendar':'ຕາຕະລາງກິດຈະກຳ','admin.calendar.formTitle':'ເພີ່ມກິດຈະກຳ','admin.calendar.name':'ຊື່ກິດຈະກຳ','admin.calendar.date':'ວັນທີ','admin.calendar.place':'ສະຖານທີ່','admin.calendar.save':'ບັນທຶກກິດຈະກຳ','admin.calendar.empty':'ຍັງບໍ່ມີກິດຈະກຳ.','admin.bookings.empty':'ຍັງບໍ່ມີຄຳຂໍຈອງ.','admin.members.empty':'ຍັງບໍ່ມີຂໍ້ມູນສະມາຊິກ.','admin.report.bookings':'ຄຳຂໍຈອງປະສົບການ','admin.report.members':'ລູກຄ້າທີ່ເຄີຍຈອງ','admin.report.revenue':'ລາຍຮັບຈາກຄຳສັ່ງຊື້','admin.prototype':'ຂໍ້ມູນຕົວຢ່າງໃນບຣາວເຊີນີ້; ຍັງບໍ່ໄດ້ຊິງຄ໌ກັບ Firebase.','admin.synced':'ຂໍ້ມູນກຳລັງຊິງຄ໌ຈາກ Firebase.','admin.dataLoading':'ກຳລັງໂຫຼດຂໍ້ມູນຈາກ Firebase…','admin.dataError':'ໂຫຼດຂໍ້ມູນບໍ່ສຳເລັດ. ກວດ Firestore rules ແລະ ການເຊື່ອມຕໍ່.','admin.saveError':'ບັນທຶກບໍ່ສຳເລັດ. ກວດສິດເຂົ້າເຖິງ ແລະ ລອງໃໝ່.',
     'admin.toSite':'ໄປເວັບໄຊ','admin.welcome':'ຍິນດີຕ້ອນຮັບ ແອັດມິນ',
     'admin.stat.orders':'ການສັ່ງຊື້ທັງໝົດ','admin.stat.revenue':'ລາຍຮັບ',
     'admin.stat.products':'ສິນຄ້າ','admin.stat.customers':'ລູກຄ້າ',
@@ -3453,7 +3457,7 @@ const I18N = {
     'acc.login.success':'Signed in','acc.register.success':'Registered',
     'acc.logout.success':'Signed out','acc.fillInfo':'Please fill in all fields',
     'acc.fillEmail':'Please enter email','acc.itemCount':'products',
-    'exp.title':'Book a Lao–Vietnamese cultural experience','exp.intro':'Book tickets for food experiences, cultural events and discovery workshops. The company will publish dates in the calendar below.','exp.event':'Food & cultural events','exp.event.desc':'Taste local flavours and join cultural activities scheduled by the company.','exp.workshop':'Cultural discovery workshops','exp.workshop.desc':'Meet artisans, learn local traditions and try a craft activity yourself.','exp.booking':'Request a booking','exp.type':'Experience type','exp.name':'Full name','exp.contact':'Phone or email','exp.date':'Preferred date','exp.guests':'Tickets','exp.submit':'Send request','exp.confirm':'Your sample booking request is saved. Our team will confirm the date with you.','exp.calendar':'Activity calendar','exp.calendar.empty':'The company calendar will be updated soon.','exp.notice':'Preview only: booking requests are kept temporarily in this browser session. Payment and automatic ticket confirmation are not connected.','exp.choose':'Choose an activity','acc.member.title':'Lotus & Champa membership','acc.member.points':'Points balance','acc.member.pointsHelp':'Points and benefits will update when the membership programme is connected.','acc.member.coupons':'My offer codes','acc.member.noCodes':'You do not have any offer codes yet.',
+    'exp.title':'Book a Lao–Vietnamese cultural experience','exp.intro':'Book tickets for food experiences, cultural events and discovery workshops. The company will publish dates in the calendar below.','exp.event':'Food & cultural events','exp.event.desc':'Taste local flavours and join cultural activities scheduled by the company.','exp.workshop':'Cultural discovery workshops','exp.workshop.desc':'Meet artisans, learn local traditions and try a craft activity yourself.','exp.booking':'Request a booking','exp.type':'Experience type','exp.name':'Full name','exp.contact':'Phone or email','exp.date':'Preferred date','exp.guests':'Tickets','exp.submit':'Send request','exp.confirm':'Your booking request was sent. Our team will confirm the date with you.','exp.saveError':'Could not send your request. Please try again.','exp.calendar':'Activity calendar','exp.calendar.empty':'The company calendar will be updated soon.','exp.notice':'Booking requests are saved to the shared system for staff confirmation. Payment and automatic ticketing are not connected.','exp.choose':'Choose an activity','acc.member.title':'Lotus & Champa membership','acc.member.points':'Points balance','acc.member.pointsHelp':'Points and benefits will update when the membership programme is connected.','acc.member.coupons':'My offer codes','acc.member.noCodes':'You do not have any offer codes yet.',
     // ===== BREADCRUMB =====
     'bc.home':'Home','bc.products':'Products','bc.cart':'Cart','bc.checkout':'Checkout',
     'bc.blog':'Blog','bc.about':'About','bc.business':'Business Model',
@@ -3519,7 +3523,7 @@ const I18N = {
     'admin.back':'← Back to website','admin.dash':'Dashboard',
     'admin.products':'Products','admin.orders':'Orders','admin.reviews':'Reviews',
     'admin.blog':'Blog','admin.coupons':'Coupons','admin.logout':'Sign out',
-    'admin.bookings':'Experience bookings','admin.members':'Members','admin.reports':'Reports','admin.calendar':'Activity calendar','admin.calendar.formTitle':'Add an activity','admin.calendar.name':'Activity name','admin.calendar.date':'Date','admin.calendar.place':'Location','admin.calendar.save':'Save activity','admin.calendar.empty':'No activities have been added.','admin.bookings.empty':'No booking requests yet.','admin.members.empty':'No member records yet.','admin.report.bookings':'Experience requests','admin.report.members':'Customers with orders','admin.report.revenue':'Order revenue','admin.prototype':'Sample data in this browser; not synced with Firebase.',
+    'admin.bookings':'Experience bookings','admin.members':'Members','admin.reports':'Reports','admin.calendar':'Activity calendar','admin.calendar.formTitle':'Add an activity','admin.calendar.name':'Activity name','admin.calendar.date':'Date','admin.calendar.place':'Location','admin.calendar.save':'Save activity','admin.calendar.empty':'No activities have been added.','admin.bookings.empty':'No booking requests yet.','admin.members.empty':'No member records yet.','admin.report.bookings':'Experience requests','admin.report.members':'Customers with orders','admin.report.revenue':'Order revenue','admin.prototype':'Sample data in this browser; not synced with Firebase.','admin.synced':'Data is syncing from Firebase.','admin.dataLoading':'Loading data from Firebase…','admin.dataError':'Could not load data. Check Firestore rules and your connection.','admin.saveError':'Could not save changes. Check access and try again.',
     'admin.toSite':'View website','admin.welcome':'Welcome back, admin',
     'admin.stat.orders':'Total orders','admin.stat.revenue':'Revenue',
     'admin.stat.products':'Products','admin.stat.customers':'Customers',
@@ -3775,7 +3779,7 @@ const I18N = {
     'acc.login.success':'เข้าสู่ระบบสำเร็จ','acc.register.success':'สมัครสมาชิกสำเร็จ',
     'acc.logout.success':'ออกจากระบบแล้ว','acc.fillInfo':'กรุณากรอกข้อมูลให้ครบ',
     'acc.fillEmail':'กรุณาใส่อีเมล','acc.itemCount':'สินค้า',
-    'exp.title':'จองประสบการณ์วัฒนธรรมลาว–เวียดนาม','exp.intro':'จองบัตรเข้าร่วมประสบการณ์อาหาร กิจกรรม และเวิร์กช็อปเรียนรู้วัฒนธรรม บริษัทจะอัปเดตกำหนดการไว้ในปฏิทินด้านล่าง','exp.event':'ประสบการณ์อาหารและกิจกรรม','exp.event.desc':'ลิ้มลองรสชาติท้องถิ่นและร่วมกิจกรรมวัฒนธรรมตามกำหนดการ','exp.workshop':'เวิร์กช็อปค้นพบวัฒนธรรม','exp.workshop.desc':'พบช่างฝีมือ เรียนรู้ประเพณี และลองทำงานหัตถกรรมด้วยตัวเอง','exp.booking':'ส่งคำขอจอง','exp.type':'ประเภทประสบการณ์','exp.name':'ชื่อและนามสกุล','exp.contact':'เบอร์โทรศัพท์หรืออีเมล','exp.date':'วันที่ต้องการ','exp.guests':'จำนวนบัตร','exp.submit':'ส่งคำขอ','exp.confirm':'บันทึกคำขอจองตัวอย่างแล้ว เจ้าหน้าที่จะยืนยันวันเวลากับคุณ','exp.calendar':'ปฏิทินกิจกรรม','exp.calendar.empty':'บริษัทจะอัปเดตปฏิทินกิจกรรมเร็ว ๆ นี้','exp.notice':'ตัวอย่างเท่านั้น: คำขอจองเก็บไว้ชั่วคราวในเซสชันเบราว์เซอร์นี้ ยังไม่เชื่อมต่อการชำระเงินหรือยืนยันบัตรอัตโนมัติ','exp.choose':'เลือกกิจกรรม','acc.member.title':'สมาชิก Lotus & Champa','acc.member.points':'คะแนนสะสม','acc.member.pointsHelp':'คะแนนและสิทธิพิเศษจะแสดงเมื่อเชื่อมต่อระบบสมาชิก','acc.member.coupons':'โค้ดส่วนลดของฉัน','acc.member.noCodes':'คุณยังไม่มีโค้ดส่วนลด',
+    'exp.title':'จองประสบการณ์วัฒนธรรมลาว–เวียดนาม','exp.intro':'จองบัตรเข้าร่วมประสบการณ์อาหาร กิจกรรม และเวิร์กช็อปเรียนรู้วัฒนธรรม บริษัทจะอัปเดตกำหนดการไว้ในปฏิทินด้านล่าง','exp.event':'ประสบการณ์อาหารและกิจกรรม','exp.event.desc':'ลิ้มลองรสชาติท้องถิ่นและร่วมกิจกรรมวัฒนธรรมตามกำหนดการ','exp.workshop':'เวิร์กช็อปค้นพบวัฒนธรรม','exp.workshop.desc':'พบช่างฝีมือ เรียนรู้ประเพณี และลองทำงานหัตถกรรมด้วยตัวเอง','exp.booking':'ส่งคำขอจอง','exp.type':'ประเภทประสบการณ์','exp.name':'ชื่อและนามสกุล','exp.contact':'เบอร์โทรศัพท์หรืออีเมล','exp.date':'วันที่ต้องการ','exp.guests':'จำนวนบัตร','exp.submit':'ส่งคำขอ','exp.confirm':'ส่งคำขอจองแล้ว เจ้าหน้าที่จะยืนยันวันเวลากับคุณ','exp.saveError':'ส่งคำขอไม่สำเร็จ กรุณาลองใหม่','exp.calendar':'ปฏิทินกิจกรรม','exp.calendar.empty':'บริษัทจะอัปเดตปฏิทินกิจกรรมเร็ว ๆ นี้','exp.notice':'คำขอจองจะบันทึกในระบบเพื่อให้เจ้าหน้าที่ยืนยันวันเวลา ยังไม่มีการชำระเงินหรือออกบัตรอัตโนมัติ','exp.choose':'เลือกกิจกรรม','acc.member.title':'สมาชิก Lotus & Champa','acc.member.points':'คะแนนสะสม','acc.member.pointsHelp':'คะแนนและสิทธิพิเศษจะแสดงเมื่อเชื่อมต่อระบบสมาชิก','acc.member.coupons':'โค้ดส่วนลดของฉัน','acc.member.noCodes':'คุณยังไม่มีโค้ดส่วนลด',
     // ===== BREADCRUMB =====
     'bc.home':'หน้าแรก','bc.products':'สินค้า','bc.cart':'ตะกร้า','bc.checkout':'ชำระเงิน',
     'bc.blog':'บล็อก','bc.about':'เกี่ยวกับเรา','bc.business':'โมเดลธุรกิจ',
@@ -3841,7 +3845,7 @@ const I18N = {
     'admin.back':'← กลับหน้าแรก','admin.dash':'ภาพรวม',
     'admin.products':'สินค้า','admin.orders':'คำสั่งซื้อ','admin.reviews':'รีวิว',
     'admin.blog':'บล็อก','admin.coupons':'โค้ดส่วนลด','admin.logout':'ออกจากระบบ',
-    'admin.bookings':'การจองประสบการณ์','admin.members':'สมาชิก','admin.reports':'รายงาน','admin.calendar':'ปฏิทินกิจกรรม','admin.calendar.formTitle':'เพิ่มกิจกรรม','admin.calendar.name':'ชื่อกิจกรรม','admin.calendar.date':'วันที่','admin.calendar.place':'สถานที่','admin.calendar.save':'บันทึกกิจกรรม','admin.calendar.empty':'ยังไม่มีกิจกรรม','admin.bookings.empty':'ยังไม่มีคำขอจอง','admin.members.empty':'ยังไม่มีข้อมูลสมาชิก','admin.report.bookings':'คำขอจองประสบการณ์','admin.report.members':'ลูกค้าที่มีคำสั่งซื้อ','admin.report.revenue':'รายได้จากคำสั่งซื้อ','admin.prototype':'ข้อมูลตัวอย่างในเบราว์เซอร์นี้ ยังไม่ซิงก์กับ Firebase',
+    'admin.bookings':'การจองประสบการณ์','admin.members':'สมาชิก','admin.reports':'รายงาน','admin.calendar':'ปฏิทินกิจกรรม','admin.calendar.formTitle':'เพิ่มกิจกรรม','admin.calendar.name':'ชื่อกิจกรรม','admin.calendar.date':'วันที่','admin.calendar.place':'สถานที่','admin.calendar.save':'บันทึกกิจกรรม','admin.calendar.empty':'ยังไม่มีกิจกรรม','admin.bookings.empty':'ยังไม่มีคำขอจอง','admin.members.empty':'ยังไม่มีข้อมูลสมาชิก','admin.report.bookings':'คำขอจองประสบการณ์','admin.report.members':'ลูกค้าที่มีคำสั่งซื้อ','admin.report.revenue':'รายได้จากคำสั่งซื้อ','admin.prototype':'ข้อมูลตัวอย่างในเบราว์เซอร์นี้ ยังไม่ซิงก์กับ Firebase','admin.synced':'กำลังซิงก์ข้อมูลจาก Firebase','admin.dataLoading':'กำลังโหลดข้อมูลจาก Firebase…','admin.dataError':'โหลดข้อมูลไม่สำเร็จ กรุณาตรวจ Firestore rules และการเชื่อมต่อ','admin.saveError':'บันทึกไม่สำเร็จ กรุณาตรวจสิทธิ์แล้วลองอีกครั้ง',
     'admin.toSite':'ดูเว็บไซต์','admin.welcome':'ยินดีต้อนรับ แอดมิน',
     'admin.stat.orders':'คำสั่งซื้อทั้งหมด','admin.stat.revenue':'รายได้',
     'admin.stat.products':'สินค้า','admin.stat.customers':'ลูกค้า',
@@ -4098,7 +4102,7 @@ const I18N = {
     'acc.login.success':'登录成功','acc.register.success':'注册成功',
     'acc.logout.success':'已登出','acc.fillInfo':'请填写完整',
     'acc.fillEmail':'请输入邮箱','acc.itemCount':'件产品',
-    'exp.title':'预订老挝—越南文化体验','exp.intro':'预订美食体验、文化活动和文化探索工作坊的门票。公司将在下方日历更新活动日期。','exp.event':'美食与文化活动','exp.event.desc':'品尝当地风味，并按公司日程参加文化活动。','exp.workshop':'文化探索工作坊','exp.workshop.desc':'结识工艺师、了解当地传统并亲手体验手工艺。','exp.booking':'提交预订申请','exp.type':'体验类型','exp.name':'姓名','exp.contact':'电话或电子邮箱','exp.date':'期望日期','exp.guests':'门票数量','exp.submit':'提交申请','exp.confirm':'示例预订申请已保存，工作人员会与您确认日期。','exp.calendar':'活动日历','exp.calendar.empty':'公司活动日历即将更新。','exp.notice':'预览版：预订申请暂存在当前浏览器会话中；尚未连接支付或自动出票。','exp.choose':'选择活动','acc.member.title':'Lotus & Champa会员','acc.member.points':'积分余额','acc.member.pointsHelp':'连接会员计划后将更新积分与优惠权益。','acc.member.coupons':'我的优惠码','acc.member.noCodes':'您暂时没有优惠码。',
+    'exp.title':'预订老挝—越南文化体验','exp.intro':'预订美食体验、文化活动和文化探索工作坊的门票。公司将在下方日历更新活动日期。','exp.event':'美食与文化活动','exp.event.desc':'品尝当地风味，并按公司日程参加文化活动。','exp.workshop':'文化探索工作坊','exp.workshop.desc':'结识工艺师、了解当地传统并亲手体验手工艺。','exp.booking':'提交预订申请','exp.type':'体验类型','exp.name':'姓名','exp.contact':'电话或电子邮箱','exp.date':'期望日期','exp.guests':'门票数量','exp.submit':'提交申请','exp.confirm':'预订申请已提交，工作人员会与您确认日期。','exp.saveError':'无法提交预订申请，请重试。','exp.calendar':'活动日历','exp.calendar.empty':'公司活动日历即将更新。','exp.notice':'预订申请会保存到共享系统，工作人员将与您确认日期；目前尚未连接付款或自动出票。','exp.choose':'选择活动','acc.member.title':'Lotus & Champa会员','acc.member.points':'积分余额','acc.member.pointsHelp':'连接会员计划后将更新积分与优惠权益。','acc.member.coupons':'我的优惠码','acc.member.noCodes':'您暂时没有优惠码。',
     // ===== BREADCRUMB =====
     'bc.home':'首页','bc.products':'产品','bc.cart':'购物车','bc.checkout':'结账',
     'bc.blog':'博客','bc.about':'关于','bc.business':'商业模式',
@@ -4164,7 +4168,7 @@ const I18N = {
     'admin.back':'← 返回首页','admin.dash':'概览',
     'admin.products':'产品','admin.orders':'订单','admin.reviews':'评价',
     'admin.blog':'博客','admin.coupons':'优惠码','admin.logout':'登出',
-    'admin.bookings':'体验预订','admin.members':'会员','admin.reports':'报表','admin.calendar':'活动日历','admin.calendar.formTitle':'添加活动','admin.calendar.name':'活动名称','admin.calendar.date':'日期','admin.calendar.place':'地点','admin.calendar.save':'保存活动','admin.calendar.empty':'尚未添加活动。','admin.bookings.empty':'暂无预订申请。','admin.members.empty':'暂无会员记录。','admin.report.bookings':'体验预订申请','admin.report.members':'有订单的客户','admin.report.revenue':'订单收入','admin.prototype':'当前浏览器中的示例数据；尚未与 Firebase 同步。',
+    'admin.bookings':'体验预订','admin.members':'会员','admin.reports':'报表','admin.calendar':'活动日历','admin.calendar.formTitle':'添加活动','admin.calendar.name':'活动名称','admin.calendar.date':'日期','admin.calendar.place':'地点','admin.calendar.save':'保存活动','admin.calendar.empty':'尚未添加活动。','admin.bookings.empty':'暂无预订申请。','admin.members.empty':'暂无会员记录。','admin.report.bookings':'体验预订申请','admin.report.members':'有订单的客户','admin.report.revenue':'订单收入','admin.prototype':'当前浏览器中的示例数据；尚未与 Firebase 同步。','admin.synced':'数据正在从 Firebase 同步。','admin.dataLoading':'正在从 Firebase 加载数据…','admin.dataError':'无法加载数据，请检查 Firestore 规则和网络连接。','admin.saveError':'无法保存更改，请检查权限后重试。',
     'admin.toSite':'查看网站','admin.welcome':'欢迎回来，管理员',
     'admin.stat.orders':'订单总数','admin.stat.revenue':'收入',
     'admin.stat.products':'产品','admin.stat.customers':'客户',
@@ -7466,7 +7470,8 @@ function escapeExperienceText(value){
 }
 
 function renderExperiences(){
-  const activities = Store.get('companyActivities', []).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  subscribeCompanyActivities();
+  const activities = window._fbActivities || [];
   return `
     <section class="page-hero"><div class="container"><div class="section-eyebrow">${t('nav.experience')}</div><h1>${t('exp.title')}</h1><p>${t('exp.intro')}</p></div></section>
     <div class="container" style="padding:34px 0 64px">
@@ -7489,7 +7494,8 @@ function renderExperiences(){
         </form>
         <section class="experience-calendar">
           <h2>${t('exp.calendar')}</h2>
-          ${activities.length ? `<div class="experience-list">${activities.map(a=>`<article class="experience-list-item"><div><strong>${escapeExperienceText(a.name)}</strong><div class="experience-note">${escapeExperienceText(a.place||'')}</div></div><time datetime="${escapeExperienceText(a.date)}">${escapeExperienceText(a.date)}</time></article>`).join('')}</div>` : `<p>${t('exp.calendar.empty')}</p>`}
+          ${window._fbActivitiesError?`<p class="experience-note">${t('admin.dataError')}</p>`:window._fbActivitiesLoading?`<p class="experience-note">${t('admin.dataLoading')}</p>`:''}
+          ${activities.length ? `<div class="experience-list">${activities.map(a=>`<article class="experience-list-item"><div><strong>${escapeExperienceText(a.name)}</strong><div class="experience-note">${escapeExperienceText(a.place||'')}</div></div><time datetime="${escapeExperienceText(a.date)}">${escapeExperienceText(a.date)}</time></article>`).join('')}</div>` : window._fbActivitiesLoading||window._fbActivitiesError ? '' : `<p>${t('exp.calendar.empty')}</p>`}
         </section>
       </div>
     </div>`;
@@ -7498,14 +7504,31 @@ function renderExperiences(){
 function attachExperienceEvents(){
   const form = document.getElementById('experienceBookingForm');
   if(!form) return;
-  form.addEventListener('submit',event=>{
+  form.addEventListener('submit',async event=>{
     event.preventDefault();
+    const submit = form.querySelector('[type="submit"]');
+    if(submit) submit.disabled = true;
     const data = new FormData(form);
-    const bookings = Store.get('experienceBookings', []);
-    bookings.unshift({id:'exp-'+Date.now(),type:String(data.get('type')),name:String(data.get('name')).trim(),contact:String(data.get('contact')).trim(),date:String(data.get('date')),guests:Math.max(1,Math.min(10,Number(data.get('guests'))||1)),status:'pending',createdAt:new Date().toISOString()});
-    Store.set('experienceBookings',bookings);
-    form.reset();
-    toast(t('exp.confirm'),'success');
+    try {
+      const fb = window.LCFB;
+      if(!fb?.ready) throw new Error('Firebase is not available');
+      const user = await fb.lcEnsureOrderUser();
+      await fb.addDoc(fb.collection(fb.db,'experienceBookings'), {
+        ownerUid:user.uid,
+        type:String(data.get('type')),
+        name:String(data.get('name')).trim(),
+        contact:String(data.get('contact')).trim(),
+        date:String(data.get('date')),
+        guests:Math.max(1,Math.min(10,Number(data.get('guests'))||1)),
+        status:'pending',
+        createdAt:fb.serverTimestamp()
+      });
+      form.reset();
+      toast(t('exp.confirm'),'success');
+    } catch(error) {
+      console.error('[Experience booking] Save failed:',error);
+      toast(t('exp.saveError'),'error');
+    } finally { if(submit) submit.disabled = false; }
   });
 }
 
@@ -7791,8 +7814,10 @@ function renderAdminContent(tab){
 }
 
 function adminExperienceBookings(){
-  const bookings = Store.get('experienceBookings', []);
-  return `<div class="admin-header"><h1>${t('admin.bookings')}<span class="sub">${bookings.length}</span></h1></div><p class="experience-note">${t('admin.prototype')}</p><div class="admin-card" style="overflow-x:auto"><table class="admin-table"><thead><tr><th>${t('exp.name')}</th><th>${t('exp.type')}</th><th>${t('exp.date')}</th><th>${t('exp.guests')}</th><th>${t('admin.col.status')}</th><th>${t('exp.contact')}</th></tr></thead><tbody>${bookings.length?bookings.map(b=>`<tr><td>${escapeExperienceText(b.name)}</td><td>${t(b.type==='workshop'?'exp.workshop':'exp.event')}</td><td>${escapeExperienceText(b.date)}</td><td>${Number(b.guests)||1}</td><td>${escapeExperienceText(b.status||'pending')}</td><td>${escapeExperienceText(b.contact)}</td></tr>`).join(''):`<tr><td colspan="6" class="admin-empty">${t('admin.bookings.empty')}</td></tr>`}</tbody></table></div>`;
+  subscribeExperienceBookings();
+  const bookings = window._fbExperienceBookings || [];
+  const note = window._fbExperienceBookingsError ? t('admin.dataError') : window._fbExperienceBookingsLoading ? t('admin.dataLoading') : t('admin.synced');
+  return `<div class="admin-header"><h1>${t('admin.bookings')}<span class="sub">${bookings.length}</span></h1></div><p class="experience-note">${note}</p><div class="admin-card" style="overflow-x:auto"><table class="admin-table"><thead><tr><th>${t('exp.name')}</th><th>${t('exp.type')}</th><th>${t('exp.date')}</th><th>${t('exp.guests')}</th><th>${t('admin.col.status')}</th><th>${t('exp.contact')}</th></tr></thead><tbody>${bookings.length?bookings.map(b=>`<tr><td>${escapeExperienceText(b.name)}</td><td>${t(b.type==='workshop'?'exp.workshop':'exp.event')}</td><td>${escapeExperienceText(b.date)}</td><td>${Number(b.guests)||1}</td><td>${escapeExperienceText(b.status||'pending')}</td><td>${escapeExperienceText(b.contact)}</td></tr>`).join(''):`<tr><td colspan="6" class="admin-empty">${t('admin.bookings.empty')}</td></tr>`}</tbody></table></div>`;
 }
 
 function adminMembers(){
@@ -7806,7 +7831,7 @@ function adminMembers(){
     current.points += Number(o.loyaltyPoints)||0;
     members.set(key,current);
   });
-  return `<div class="admin-header"><h1>${t('admin.members')}<span class="sub">${members.size}</span></h1></div><p class="experience-note">${t('admin.prototype')}</p><div class="admin-card" style="overflow-x:auto"><table class="admin-table"><thead><tr><th>${t('admin.col.customer')}</th><th>${t('exp.contact')}</th><th>${t('admin.orders')}</th><th>${t('acc.member.points')}</th></tr></thead><tbody>${members.size?[...members.values()].map(m=>`<tr><td>${escapeExperienceText(m.name)}</td><td>${escapeExperienceText(m.contact)}</td><td>${m.orders}</td><td>${m.points}</td></tr>`).join(''):`<tr><td colspan="4" class="admin-empty">${t('admin.members.empty')}</td></tr>`}</tbody></table></div>`;
+  return `<div class="admin-header"><h1>${t('admin.members')}<span class="sub">${members.size}</span></h1></div><p class="experience-note">${t('admin.synced')}</p><div class="admin-card" style="overflow-x:auto"><table class="admin-table"><thead><tr><th>${t('admin.col.customer')}</th><th>${t('exp.contact')}</th><th>${t('admin.orders')}</th><th>${t('acc.member.points')}</th></tr></thead><tbody>${members.size?[...members.values()].map(m=>`<tr><td>${escapeExperienceText(m.name)}</td><td>${escapeExperienceText(m.contact)}</td><td>${m.orders}</td><td>${m.points}</td></tr>`).join(''):`<tr><td colspan="4" class="admin-empty">${t('admin.members.empty')}</td></tr>`}</tbody></table></div>`;
 }
 
 function adminReports(){
@@ -7814,27 +7839,49 @@ function adminReports(){
   const orders = getOrders().map(orderForDisplay);
   const revenue = orders.reduce((sum,o)=>sum+(Number(o.total)||0),0);
   const members = new Set(orders.map(o=>o.ownerUid||o.email||o.phone||o.customer?.email||o.customer?.phone).filter(Boolean));
-  const bookings = Store.get('experienceBookings',[]);
-  return `<div class="admin-header"><h1>${t('admin.reports')}</h1></div><p class="experience-note">${t('admin.prototype')}</p><div class="admin-report-grid"><article class="admin-report-card">${t('admin.orders')}<strong>${orders.length}</strong></article><article class="admin-report-card">${t('admin.report.bookings')}<strong>${bookings.length}</strong></article><article class="admin-report-card">${t('admin.report.members')}<strong>${members.size}</strong></article><article class="admin-report-card">${t('admin.report.revenue')}<strong>${fmtPrice(revenue)}</strong></article></div>`;
+  subscribeExperienceBookings();
+  const bookings = window._fbExperienceBookings || [];
+  return `<div class="admin-header"><h1>${t('admin.reports')}</h1></div><p class="experience-note">${t('admin.synced')}</p><div class="admin-report-grid"><article class="admin-report-card">${t('admin.orders')}<strong>${orders.length}</strong></article><article class="admin-report-card">${t('admin.report.bookings')}<strong>${bookings.length}</strong></article><article class="admin-report-card">${t('admin.report.members')}<strong>${members.size}</strong></article><article class="admin-report-card">${t('admin.report.revenue')}<strong>${fmtPrice(revenue)}</strong></article></div>`;
 }
 
 function adminCalendar(){
-  const activities = Store.get('companyActivities', []).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  return `<div class="admin-header"><h1>${t('admin.calendar')}</h1></div><p class="experience-note">${t('admin.prototype')}</p><form class="admin-form-grid" id="adminActivityForm" onsubmit="saveAdminActivity(event)"><label class="form-field"><span>${t('admin.calendar.name')}</span><input name="name" required maxlength="120"/></label><label class="form-field"><span>${t('admin.calendar.date')}</span><input name="date" type="date" required/></label><label class="form-field"><span>${t('admin.calendar.place')}</span><input name="place" maxlength="120"/></label><button class="btn btn-primary" type="submit">${t('admin.calendar.save')}</button></form><div class="admin-card" style="padding:16px"><h3>${t('exp.calendar')}</h3>${activities.length?`<div class="experience-list">${activities.map(a=>`<article class="experience-list-item"><div><strong>${escapeExperienceText(a.name)}</strong><div class="experience-note">${escapeExperienceText(a.place||'')} · ${escapeExperienceText(a.date)}</div></div><button type="button" class="btn btn-ghost btn-sm" onclick="deleteAdminActivity('${escapeExperienceText(a.id)}')">${t('common.delete')}</button></article>`).join('')}</div>`:`<p class="admin-empty">${t('admin.calendar.empty')}</p>`}</div>`;
+  subscribeCompanyActivities();
+  const activities = window._fbActivities || [];
+  const note = window._fbActivitiesError ? t('admin.dataError') : window._fbActivitiesLoading ? t('admin.dataLoading') : t('admin.synced');
+  return `<div class="admin-header"><h1>${t('admin.calendar')}</h1></div><p class="experience-note">${note}</p><form class="admin-form-grid" id="adminActivityForm" onsubmit="saveAdminActivity(event)"><label class="form-field"><span>${t('admin.calendar.name')}</span><input name="name" required maxlength="120"/></label><label class="form-field"><span>${t('admin.calendar.date')}</span><input name="date" type="date" required/></label><label class="form-field"><span>${t('admin.calendar.place')}</span><input name="place" maxlength="120"/></label><button class="btn btn-primary" type="submit">${t('admin.calendar.save')}</button></form><div class="admin-card" style="padding:16px"><h3>${t('exp.calendar')}</h3>${activities.length?`<div class="experience-list">${activities.map(a=>`<article class="experience-list-item"><div><strong>${escapeExperienceText(a.name)}</strong><div class="experience-note">${escapeExperienceText(a.place||'')} · ${escapeExperienceText(a.date)}</div></div><button type="button" class="btn btn-ghost btn-sm" onclick="deleteAdminActivity('${escapeExperienceText(a.id)}')">${t('common.delete')}</button></article>`).join('')}</div>`:`<p class="admin-empty">${t('admin.calendar.empty')}</p>`}</div>`;
 }
 
-function saveAdminActivity(event){
+async function saveAdminActivity(event){
   event.preventDefault();
   const data = new FormData(event.currentTarget);
-  const activities = Store.get('companyActivities',[]);
-  activities.push({id:'activity-'+Date.now(),name:String(data.get('name')).trim(),date:String(data.get('date')),place:String(data.get('place')||'').trim()});
-  Store.set('companyActivities',activities);
-  router();
+  const submit = event.currentTarget.querySelector('[type="submit"]');
+  if(submit) submit.disabled = true;
+  try {
+    const fb = window.LCFB;
+    if(!isFirebaseAdmin() || !fb?.ready) throw new Error('Admin access or Firebase is unavailable');
+    await fb.addDoc(fb.collection(fb.db,'activities'), {
+      name:String(data.get('name')).trim(),
+      date:String(data.get('date')),
+      place:String(data.get('place')||'').trim(),
+      createdAt:fb.serverTimestamp(),
+      updatedAt:fb.serverTimestamp()
+    });
+    event.currentTarget.reset();
+  } catch(error) {
+    console.error('[Activity calendar] Save failed:',error);
+    toast(t('admin.saveError'),'error');
+  } finally { if(submit) submit.disabled = false; }
 }
 
-function deleteAdminActivity(id){
-  Store.set('companyActivities',Store.get('companyActivities',[]).filter(a=>a.id!==id));
-  router();
+async function deleteAdminActivity(id){
+  try {
+    const fb = window.LCFB;
+    if(!isFirebaseAdmin() || !fb?.ready) throw new Error('Admin access or Firebase is unavailable');
+    await fb.deleteDoc(fb.doc(fb.db,'activities',id));
+  } catch(error) {
+    console.error('[Activity calendar] Delete failed:',error);
+    toast(t('admin.saveError'),'error');
+  }
 }
 
 async function adminLogin(){
@@ -7978,6 +8025,112 @@ window._fbOrders = [];
 window._fbOrdersUnsub = null;
 window._fbOrdersLoading = true;
 window._fbOrdersError = null;
+
+window._fbActivities = [];
+window._fbActivitiesUnsub = null;
+window._fbActivitiesLoading = true;
+window._fbActivitiesError = null;
+window._fbExperienceBookings = [];
+window._fbExperienceBookingsUnsub = null;
+window._fbExperienceBookingsKey = null;
+window._fbExperienceBookingsLoading = false;
+window._fbExperienceBookingsError = null;
+
+function subscribeCompanyActivities(){
+  const fb = window.LCFB;
+  if(!fb?.ready || window._fbActivitiesUnsub) return;
+  window._fbActivitiesLoading = true;
+  window._fbActivitiesUnsub = fb.onSnapshot(
+    fb.query(fb.collection(fb.db,'activities'),fb.orderBy('date')),
+    snap => {
+      window._fbActivities = snap.docs.map(d=>({...d.data(),id:d.id}));
+      window._fbActivitiesLoading = false;
+      window._fbActivitiesError = null;
+      if(!snap.metadata.fromCache) migrateLocalCompanyActivities(fb,window._fbActivities);
+      const page = parseHash().page;
+      if(page === 'experiences' || (page === 'admin' && parseHash().sub === 'calendar')) router();
+    },
+    error => {
+      console.error('[Activity calendar] Read failed:',error);
+      window._fbActivitiesError = error;
+      window._fbActivitiesLoading = false;
+      const page = parseHash().page;
+      if(page === 'experiences' || page === 'admin') router();
+    }
+  );
+}
+
+async function migrateLocalCompanyActivities(fb,cloudActivities){
+  const user=fb?.auth?.currentUser;
+  if(!user || !isFirebaseAdmin()) return;
+  const marker=`lc.activities-migrated.${user.uid}`;
+  if(localStorage.getItem(marker)==='1' || window._fbActivityMigrationRunning) return;
+  const legacy=Store.get('companyActivities',[]);
+  if(!Array.isArray(legacy) || !legacy.length){ localStorage.setItem(marker,'1'); return; }
+  window._fbActivityMigrationRunning=true;
+  const signatures=new Set(cloudActivities.map(a=>`${a.date}|${a.name}|${a.place||''}`));
+  try {
+    for(const old of legacy){
+      const name=String(old?.name||'').trim().slice(0,120);
+      const date=String(old?.date||'');
+      const place=String(old?.place||'').trim().slice(0,120);
+      if(!name || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+      const signature=`${date}|${name}|${place}`;
+      if(signatures.has(signature)) continue;
+      await fb.addDoc(fb.collection(fb.db,'activities'),{name,date,place,createdAt:fb.serverTimestamp(),updatedAt:fb.serverTimestamp()});
+      signatures.add(signature);
+    }
+    localStorage.setItem(marker,'1');
+  } catch(error) {
+    console.warn('[Activity calendar] Legacy local activities could not be migrated:',error);
+  } finally { window._fbActivityMigrationRunning=false; }
+}
+
+function resetExperienceBookingSubscription(){
+  if(window._fbExperienceBookingsUnsub) window._fbExperienceBookingsUnsub();
+  window._fbExperienceBookingsUnsub = null;
+  window._fbExperienceBookingsKey = null;
+  window._fbExperienceBookings = [];
+  window._fbExperienceBookingsLoading = false;
+  window._fbExperienceBookingsError = null;
+}
+
+function subscribeExperienceBookings(){
+  const fb = window.LCFB;
+  if(!fb?.ready || !isFirebaseAdmin()) return;
+  const user = fb.auth.currentUser;
+  if(!user) return;
+  if(window._fbExperienceBookingsKey === user.uid) return;
+  resetExperienceBookingSubscription();
+  window._fbExperienceBookingsKey = user.uid;
+  window._fbExperienceBookingsLoading = true;
+  window._fbExperienceBookingsUnsub = fb.onSnapshot(fb.collection(fb.db,'experienceBookings'),snap=>{
+    if(window._fbExperienceBookingsKey !== user.uid) return;
+    window._fbExperienceBookings = snap.docs.map(d=>({...d.data(),id:d.id,createdAt:d.data().createdAt?.toDate?.() || null}))
+      .sort((a,b)=>(b.createdAt?.getTime?.()||0)-(a.createdAt?.getTime?.()||0));
+    window._fbExperienceBookingsLoading = false;
+    window._fbExperienceBookingsError = null;
+    const route = parseHash();
+    if(route.page === 'admin' && ['bookings','reports'].includes(route.sub)) router();
+  },error=>{
+    console.error('[Experience bookings] Read failed:',error);
+    window._fbExperienceBookingsError = error;
+    window._fbExperienceBookingsLoading = false;
+    if(parseHash().page === 'admin') router();
+  });
+}
+
+window.addEventListener('lcfb-ready',()=>{
+  subscribeCompanyActivities();
+  subscribeExperienceBookings();
+  if(!window.LCFB?.ready && ['experiences','admin'].includes(parseHash().page)) router();
+});
+window.addEventListener('lc-auth-reset',resetExperienceBookingSubscription);
+window.addEventListener('lc-auth-changed',()=>{
+  resetExperienceBookingSubscription();
+  const route=parseHash();
+  if(route.page==='admin') { subscribeExperienceBookings(); router(); }
+});
 
 function resetOrderSubscription(){
   if(window._fbOrdersUnsub) window._fbOrdersUnsub();
